@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using FoundationTextConverter.Model;
 using NDesk.Options;
 
@@ -10,21 +9,25 @@ namespace FoundationTextConverter
         static void Main(string[] args)
         {
             bool export = true;
-            string directory = Directory.GetCurrentDirectory();
+            string file = Directory.GetCurrentDirectory();
 
             OptionSet options = new OptionSet()
                 .Add("import", value => export = false)
-                .Add("dir=", value => directory = value);
+                .Add("file=", value => file = value);
 
             options.Parse(args);
 
             TextConverter converter = new TextConverter();
 
+            converter.LoadDatFile(file);
+
             if (export)
             {
+                converter.ConvertToTxt(file);
             }
             else
             {
+                converter.ConvertToDat(file);
             }
         }
     }

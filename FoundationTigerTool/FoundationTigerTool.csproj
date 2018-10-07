@@ -62,6 +62,7 @@
     <Compile Include="Model\TigerBinaryReader.cs" />
     <Compile Include="Model\TigerBinaryWriter.cs" />
     <Compile Include="Model\TigerEditor.cs" />
+    <Compile Include="Model\TigerFile.cs" />
     <Compile Include="Views\OneTimeRunWindow.xaml.cs">
       <DependentUpon>OneTimeRunWindow.xaml</DependentUpon>
     </Compile>

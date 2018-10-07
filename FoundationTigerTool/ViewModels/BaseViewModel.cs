@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using FoundationTigerTool.Model;
 
 namespace FoundationTigerTool.ViewModels
@@ -86,13 +89,17 @@ namespace FoundationTigerTool.ViewModels
 
         public void ExtractFile(string directory)
         {
+            var totalSize = Model.TigerFile.TigerEntries.Sum(entry => entry.FileSize);
+            uint currentSize = 0;
+
             using (TigerBinaryReader reader = new TigerBinaryReader(File.Open(LoadedFilePath, FileMode.Open)))
             {
-                //foreach (Entry entry in entryCollection)
-                //{
-                Model.ExtractFile(directory, reader);
-                //CurrentProgress = (int)(currentSize * 100.0 / totalSize);
-                //}
+                foreach (TigerEntry entry in Model.TigerFile.TigerEntries)
+                {
+                    Model.ExtractFile(entry, directory, reader);
+                    CurrentProgress = (int) (currentSize * 100.0 / totalSize);
+                    currentSize += entry.FileSize;
+                }
             }
         }
 
@@ -105,26 +112,39 @@ namespace FoundationTigerTool.ViewModels
                 {
                     if (!string.IsNullOrWhiteSpace(token))
                     {
+                        var parsed = UInt64.TryParse(token, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hash);
+
+                        if (parsed)
+                        {
+                            var entry = Model.TigerFile.TigerEntries.SingleOrDefault(_ => _.Hash == hash);
+
+                            if (entry != null)
+                            {
+                                entry.Changed = file;
+                            }
+                        }
                     }
                 }
             }
         }
 
-        public void SaveStructure(string path)
+        public void SaveStructure()
         {
-            using (TigerBinaryReader reader = new TigerBinaryReader(File.Open(LoadedFilePath, FileMode.Open)))
+            using (TigerBinaryWriter writer = new TigerBinaryWriter(File.Open(LoadedFilePath, FileMode.Open, FileAccess.ReadWrite)))
             {
-                using (TigerBinaryWriter writer = new TigerBinaryWriter(File.Open(path, FileMode.Create)))
-                {
-                    //foreach (Entry entry in entries)
-                    //{
-                    Model.SaveDataEntry(reader, writer);
-                    //CurrentProgress = (int)(currentSize * 100.0 / totalSize);
-                    //CurrentFile = entry.Name;
-                    //}
+                long currentSize = 0;
+                var entries = Model.TigerFile.TigerEntries.Where(_ => _.Changed != null).ToList();
+                long totalSize = entries.Sum(_ => _.FileSize);
 
-                    Model.SaveIndex(writer);
+                foreach (TigerEntry entry in entries)
+                {
+                    Model.AppendDataEntry(writer, entry);
+                    CurrentProgress = (int)(currentSize * 100.0 / totalSize);
+                    CurrentFile = entry.Hash.ToString();
+                    currentSize += entry.FileSize;
                 }
+
+                Model.UpdateTigerFileStructure(writer);
             }
 
             OnPropertyChanged("Model");
@@ -133,7 +153,7 @@ namespace FoundationTigerTool.ViewModels
         public string GenerateRandomName()
         {
             Random generator = new Random();
-            return Path.ChangeExtension(LoadedFilePath, @".tmp_" + generator.Next().ToString());
+            return Path.ChangeExtension(LoadedFilePath, @".tmp_" + generator.Next());
         }
     }
 }

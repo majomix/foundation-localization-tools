@@ -29,7 +29,7 @@ namespace FoundationTigerTool.ViewModels
             OptionSet options = new OptionSet()
                 .Add("export", value => Export = true)
                 .Add("import", value => Export = false)
-                .Add("index=", value => LoadedFilePath = CreateFullPath(value, false))
+                .Add("tiger=", value => LoadedFilePath = CreateFullPath(value, false))
                 .Add("dir=", value => _targetDirectory = CreateFullPath(value, true));
 
             options.Parse(Environment.GetCommandLineArgs());
@@ -40,11 +40,18 @@ namespace FoundationTigerTool.ViewModels
             if (_targetDirectory != null && LoadedFilePath != null)
             {
                 LoadStructure();
+                ExtractFile(_targetDirectory);
             }
         }
 
         public void Import()
         {
+            if (_targetDirectory != null && Directory.Exists(_targetDirectory) && LoadedFilePath != null)
+            {
+                LoadStructure();
+                ResolveNewFiles(_targetDirectory);
+                SaveStructure();
+            }
         }
 
         private string CreateFullPath(string path, bool isDirectory)

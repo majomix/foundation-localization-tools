@@ -19,8 +19,7 @@ namespace FoundationTigerTool.Views
 
         protected override void OnContentRendered(EventArgs e)
         {
-            OneTimeRunViewModel oneTimeRunViewModel = DataContext as OneTimeRunViewModel;
-            if (oneTimeRunViewModel != null)
+            if (DataContext is OneTimeRunViewModel oneTimeRunViewModel)
             {
                 if (oneTimeRunViewModel.Export == null)
                 {
